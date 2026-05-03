@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Balatro Apex: Hardcore Edition</title>
+    <title>Balatro Apex: Scoring Animation Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -27,8 +27,8 @@
         }
         .vortex-inner {
             position: fixed; inset: -50%; z-index: -1;
-            background: repeating-conic-gradient(from 0deg, #ff00ff02 0deg 15deg, transparent 15deg 30deg);
-            animation: rotate 100s linear infinite; mix-blend-mode: color-dodge;
+            background: repeating-conic-gradient(from 0deg, #ff00ff03 0deg 15deg, transparent 15deg 30deg);
+            animation: rotate 120s linear infinite; mix-blend-mode: color-dodge;
         }
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.15); } }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -44,45 +44,57 @@
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         .screen.active { display: flex; }
 
-        /* 卡牌样式 - 绝对物理锁定 */
+        /* 卡牌：物理锚定逻辑 */
         .card {
             width: var(--card-w); height: var(--card-h); background: white; border-radius: 10px; color: black;
             position: absolute; cursor: pointer; 
-            transition: transform 0.3s cubic-bezier(0.18, 0.9, 0.35, 1.15), box-shadow 0.2s, border 0.2s, opacity 0.3s;
+            transition: transform 0.4s cubic-bezier(0.18, 0.9, 0.32, 1.25), box-shadow 0.2s, border 0.2s, opacity 0.3s;
             display: flex; flex-direction: column; justify-content: space-between; padding: 10px; border: 2px solid #ddd;
             box-shadow: 4px 4px 0 rgba(0,0,0,0.6); user-select: none; will-change: transform;
             left: 50%; bottom: 50%;
         }
-        .card.in-deck { transform: translate(600px, 400px) rotate(180deg) scale(0) !important; opacity: 0; pointer-events: none; transition: none !important; }
-        .card.selected-visual { border: 4px solid var(--gold) !important; box-shadow: 0 0 30px var(--gold), 5px 5px 0 rgba(0,0,0,0.5) !important; }
-        .card.debuffed { filter: grayscale(1) brightness(0.4); }
+        
+        .card.selected-visual {
+            border: 4px solid var(--gold) !important;
+            box-shadow: 0 0 30px var(--gold), 5px 5px 0 rgba(0,0,0,0.5) !important;
+            z-index: 800 !important;
+        }
+        
+        .card.in-deck { transform: translate(500px, 400px) rotate(180deg) scale(0) !important; opacity: 0; pointer-events: none; transition: none !important; }
+        .card.scoring-jump { transform: translateY(-130px) scale(1.2) !important; border-color: white !important; z-index: 900 !important; }
 
         .c-red { color: var(--red); } .c-black { color: #1a1a1a; }
 
         /* UI 面板 */
         .panel { background: var(--panel); border: 4px solid #3a3a4a; box-shadow: 10px 10px 0 #000; padding: 24px; z-index: 10; position: relative; }
-        .lcd { background: #000; color: #ff0040; text-shadow: 0 0 10px #ff0040; padding: 14px; font-size: 16px; text-align: right; border: 4px inset #444; font-family: monospace; }
+        .lcd { background: #000; color: #ff0040; text-shadow: 0 0 10px #ff0040; padding: 14px; font-size: 18px; text-align: right; border: 4px inset #444; font-family: monospace; min-width: 220px;}
         
         .btn { padding: 18px 36px; cursor: pointer; text-transform: uppercase; font-size: 12px; border: none; box-shadow: 6px 6px 0 #000; transition: 0.1s; font-weight: bold; }
         .btn:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }
-        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
         .btn-blue { background: var(--blue); color: white; } 
         .btn-red { background: var(--red); color: white; } 
         .btn-gold { background: var(--gold); color: black; }
 
         /* 小丑牌 */
-        .joker-row { display: flex; gap: 14px; position: absolute; top: 30px; left: 50%; transform: translateX(-50%); z-index: 20; }
+        .joker-row { display: flex; gap: 14px; position: absolute; top: 40px; left: 50%; transform: translateX(-50%); z-index: 20; }
         .joker-slot { width: 80px; height: 110px; border: 3px dashed #445; border-radius: 10px; }
         .joker-card {
-            width: 80px; height: 110px; background: white; color: #111; border: 2px solid #333; border-radius: 10px; font-size: 9px;
+            width: 80px; height: 110px; background: white; color: #111; border: 2px solid #333; border-radius: 10px; font-size: 10px;
             display: flex; align-items: center; justify-content: center; text-align: center;
-            box-shadow: 5px 5px 0 #000; padding: 8px; line-height: 1.4; transform: rotate(-1deg);
+            box-shadow: 5px 5px 0 #000; padding: 8px; line-height: 1.4; transition: 0.2s;
         }
+        .joker-card.trigger { transform: scale(1.3) translateY(-10px) rotate(5deg); border-color: var(--gold); box-shadow: 0 0 20px var(--gold); z-index: 1000; }
 
         .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(3px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
 
-        .boss-warning { background: #4a0404; border: 2px solid var(--red); color: #ffbaba; padding: 10px; font-size: 9px; margin-top: 15px; text-transform: uppercase; }
+        /* 计分数值动画 */
+        .calc-box { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .calc-box.bump { transform: scale(1.4); filter: brightness(1.5); }
+
+        #save-tag { position: fixed; bottom: 20px; right: 20px; font-size: 10px; color: #444; transition: 0.3s; z-index: 100; }
+        #save-tag.active { color: var(--gold); }
     </style>
 </head>
 <body class="crt">
@@ -91,33 +103,33 @@
 
     <!-- 1. 主界面 -->
     <div id="screen-home" class="screen active">
-        <h1 class="text-8xl text-red-500 mb-8" style="text-shadow: 8px 8px 0 #fff;">BALATRO</h1>
-        <p class="text-[14px] text-blue-400 mb-24 tracking-[0.5em] animate-pulse">HARDCORE MODE</p>
+        <h1 class="text-7xl text-red-500 mb-8" style="text-shadow: 6px 6px 0 #fff;">BALATRO</h1>
+        <p class="text-[16px] text-blue-400 mb-24 tracking-[0.6em] animate-pulse">SCORING MASTER</p>
         <div class="flex flex-col gap-8 w-96">
-            <button onclick="core.newRun()" class="btn btn-blue text-2xl">新挑战</button>
-            <button id="btn-continue" onclick="core.continueRun()" class="btn btn-gold text-2xl hidden">继续</button>
+            <button onclick="core.newRun()" class="btn btn-blue text-2xl">新挑战 (New Run)</button>
+            <button id="btn-continue" onclick="core.continueRun()" class="btn btn-gold text-2xl hidden">继续游戏</button>
         </div>
     </div>
 
     <!-- 2. 盲注选择 -->
     <div id="screen-blind" class="screen">
-        <h2 class="text-5xl text-yellow-500 mb-12 italic font-bold">ANTE <span id="ante-ui">1</span></h2>
+        <h2 class="text-5xl text-yellow-500 mb-12 italic font-bold tracking-tighter">ANTE <span id="ante-ui">1</span></h2>
         <div class="flex gap-8">
             <div id="b-small" class="panel w-80 text-center cursor-pointer hover:scale-105 transition" onclick="core.startCombat('small')">
-                <div class="text-blue-300 text-xl mb-6 italic">小盲注</div>
-                <div class="text-[12px] mb-4 text-gray-400">目标: <span id="t-small">300</span></div>
-                <div class="text-yellow-500 text-[10px]">奖励: $3</div>
+                <div class="text-blue-300 text-2xl mb-8 italic">小盲注</div>
+                <div class="text-[14px] mb-6 text-gray-400">目标: <span id="t-small">300</span></div>
+                <div class="text-yellow-500 text-[12px]">奖励: $3</div>
             </div>
             <div id="b-big" class="panel w-80 text-center cursor-pointer hover:scale-105 transition" onclick="core.startCombat('big')">
-                <div class="text-red-300 text-xl mb-6 italic">大盲注</div>
-                <div class="text-[12px] mb-4 text-gray-400">目标: <span id="t-big">450</span></div>
-                <div class="text-yellow-500 text-[10px]">奖励: $4</div>
+                <div class="text-red-300 text-2xl mb-8 italic">大盲注</div>
+                <div class="text-[14px] mb-6 text-gray-400">目标: <span id="t-big">450</span></div>
+                <div class="text-yellow-500 text-[12px]">奖励: $4</div>
             </div>
             <div id="b-boss" class="panel w-80 text-center cursor-pointer hover:scale-105 transition border-red-600" onclick="core.startCombat('boss')">
-                <div class="text-purple-400 text-xl mb-4 font-black">BOSS 盲注</div>
+                <div class="text-purple-400 text-2xl mb-4 font-black">BOSS</div>
                 <div id="boss-name-ui" class="text-[10px] text-red-500 mb-2 uppercase tracking-tighter"></div>
-                <div class="text-[12px] mb-4 text-gray-400">目标: <span id="t-boss">900</span></div>
-                <div id="boss-desc-ui" class="text-[8px] text-red-200 border border-red-900 p-2 bg-red-950/50"></div>
+                <div class="text-[14px] mb-4 text-gray-400">目标: <span id="t-boss">600</span></div>
+                <div id="boss-desc-ui" class="text-[9px] text-red-200 border border-red-900 p-2 bg-red-950/50"></div>
             </div>
         </div>
     </div>
@@ -127,49 +139,49 @@
         <div class="joker-row" id="ui-jokers"></div>
 
         <div class="flex flex-row w-full max-w-7xl h-full px-12 gap-16 items-center">
-            <!-- 左侧控制台 -->
-            <div class="w-80 flex flex-col gap-6">
+            <!-- 计分板 -->
+            <div class="w-96 flex flex-col gap-8">
                 <div class="panel" id="score-panel">
-                    <div id="round-info" class="text-[10px] text-gray-400 mb-4 uppercase">Ante 1 - Small</div>
-                    <div id="ui-score" class="lcd text-2xl">0</div>
-                    <div class="text-[10px] text-gray-400 mt-8 mb-4 uppercase">To Beat</div>
-                    <div id="ui-target" class="lcd text-2xl" style="color:#60a5fa; text-shadow:0 0 10px #60a5fa;">300</div>
-                    <div id="active-boss-ui" class="hidden boss-warning"></div>
+                    <div id="round-info" class="text-[10px] text-gray-400 mb-4 uppercase tracking-widest">Ante 1 - Small</div>
+                    <div id="ui-score" class="lcd text-3xl">0</div>
+                    <div class="text-[10px] text-gray-400 mt-10 mb-4 uppercase">To Beat</div>
+                    <div id="ui-target" class="lcd text-3xl" style="color:#60a5fa; text-shadow:0 0 10px #60a5fa;">300</div>
                 </div>
                 <div class="flex gap-4">
-                    <div class="panel flex-1 text-center py-4">
-                        <div class="text-[10px] mb-2 text-blue-300">Hands</div>
-                        <div id="ui-hands" class="text-blue-400 text-3xl">4</div>
+                    <div class="panel flex-1 text-center py-6">
+                        <div class="text-[12px] mb-2 text-blue-300">HANDS</div>
+                        <div id="ui-hands" class="text-blue-400 text-4xl">4</div>
                     </div>
-                    <div class="panel flex-1 text-center py-4">
-                        <div class="text-[10px] mb-2 text-red-300">Discards</div>
-                        <div id="ui-discards" class="text-red-400 text-3xl">3</div>
+                    <div class="panel flex-1 text-center py-6">
+                        <div class="text-[12px] mb-2 text-red-300">DISCARDS</div>
+                        <div id="ui-discards" class="text-red-400 text-4xl">3</div>
                     </div>
                 </div>
-                <div class="panel text-center py-6">
-                    <div class="text-[12px] text-yellow-500 mb-2">CASH: <span id="ui-gold">$0</span></div>
+                <div class="panel text-center py-8">
+                    <div class="text-[14px] text-yellow-500 mb-2 font-bold">GOLD: <span id="ui-gold">$0</span></div>
                 </div>
             </div>
 
-            <!-- 核心交互区 -->
+            <!-- 主交互区 -->
             <div class="flex-1 flex flex-col h-full items-center justify-between py-24 relative">
-                <div class="flex flex-col items-center gap-6">
-                    <div class="flex flex-col items-center">
-                        <div id="ui-hand-lvl" class="text-[9px] text-purple-400 mb-2"></div>
-                        <div id="ui-hand-name" class="text-yellow-400 text-3xl h-10 tracking-widest uppercase font-bold"></div>
+                <div class="flex flex-col items-center gap-8">
+                    <div class="flex flex-col items-center h-20">
+                        <div id="ui-hand-lvl" class="text-[10px] text-purple-400 mb-2"></div>
+                        <div id="ui-hand-name" class="text-yellow-400 text-3xl h-12 tracking-[0.2em] uppercase font-bold"></div>
                     </div>
-                    <div class="bg-black/90 border-4 border-gray-700 p-8 rounded-3xl flex gap-10 items-center shadow-2xl">
-                        <div id="calc-chips" class="text-blue-400 text-5xl">0</div>
-                        <div class="text-white text-xl font-bold">X</div>
-                        <div id="calc-mult" class="text-red-400 text-5xl">0</div>
+                    <div class="bg-black/90 border-4 border-gray-700 p-10 rounded-3xl flex gap-12 items-center shadow-2xl calc-box" id="calc-panel">
+                        <div id="calc-chips" class="text-blue-400 text-6xl">0</div>
+                        <div class="text-white text-2xl font-bold">X</div>
+                        <div id="calc-mult" class="text-red-400 text-6xl">0</div>
                     </div>
                 </div>
 
-                <div id="card-area" class="relative w-full h-56 flex justify-center items-end"></div>
+                <!-- 手牌容器 -->
+                <div id="card-area" class="relative w-full h-56 flex justify-center items-end" style="min-width: 600px;"></div>
 
                 <div class="flex gap-12">
-                    <button id="play-btn" onclick="core.play()" class="btn btn-blue px-14 py-8 text-xl">Play Hand</button>
-                    <button id="discard-btn" onclick="core.discard()" class="btn btn-red px-14 py-8 text-xl">Discard</button>
+                    <button id="play-btn" onclick="core.play()" class="btn btn-blue px-16 py-8 text-xl">Play Hand</button>
+                    <button id="discard-btn" onclick="core.discard()" class="btn btn-red px-16 py-8 text-xl">Discard</button>
                 </div>
             </div>
         </div>
@@ -177,13 +189,15 @@
 
     <!-- 4. 商店界面 -->
     <div id="screen-shop" class="screen">
-        <h2 class="text-5xl text-yellow-500 mb-16 italic font-black">THE SHOP</h2>
-        <div id="shop-container" class="flex gap-10 mb-20"></div>
+        <h2 class="text-6xl text-yellow-500 mb-16 italic font-black">THE SHOP</h2>
+        <div id="shop-container" class="flex gap-12 mb-24"></div>
         <div class="flex items-center gap-16">
-            <div class="text-3xl">CASH: <span id="shop-gold" class="text-yellow-500">$0</span></div>
-            <button onclick="core.showScreen('blind')" class="btn btn-blue text-2xl px-16">NEXT ROUND</button>
+            <div class="text-4xl">CASH: <span id="shop-gold" class="text-yellow-500">$0</span></div>
+            <button onclick="core.showScreen('blind')" class="btn btn-blue text-3xl px-20 py-10">CONTINUE</button>
         </div>
     </div>
+
+    <div id="save-tag">SAVE SYNCED</div>
 
     <script>
         // --- 核心配置 ---
@@ -195,22 +209,13 @@
         const RANK_VALS = { '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':10, 'Q':10, 'K':10, 'A':11 };
         const STRAIGHT_VALS = { '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, '10':10, 'J':11, 'Q':12, 'K':13, 'A':14 };
 
-        // 真正的噩梦 Boss 池
-        const BOSS_POOL = [
-            { id: 'the_wall', name: '大墙', desc: '目标分数变为 4.0 倍', mult: 4 },
-            { id: 'the_needle', name: '针刺', desc: '本关卡只有 1 次出牌机会', hands: 1 },
-            { id: 'the_flint', name: '燧石', desc: '基础筹码与倍率减半', debuff: 'half_base' },
-            { id: 'the_mark', name: '标记', desc: '所有花牌 (J,Q,K) 不计分', debuff: 'no_face' },
-            { id: 'the_pillar', name: '支柱', desc: '本关卡无法弃牌', no_discard: true }
-        ];
-
-        const JOKERS = [
+        const JOKER_POOL = [
             { id: 1, name: '愤怒小丑', desc: '+15 倍率', price: 4, type: 'mult', val: 15 },
-            { id: 2, name: '格罗格', desc: '+100 筹码', price: 6, type: 'chips', val: 100 },
-            { id: 3, name: '全息卡', desc: 'X1.5 倍率', price: 10, type: 'xMult', val: 1.5 },
-            { id: 4, name: '黄金小丑', desc: '出牌后获得 $2', price: 8, type: 'gold', val: 2 },
-            { id: 5, name: '混沌', desc: 'X2.0 倍率', price: 14, type: 'xMult', val: 2 },
-            { id: 6, name: '星座', desc: '每个星球牌永久 +X0.1 倍率', price: 12, type: 'scaling', val: 0.1 }
+            { id: 2, name: '格罗格', desc: '+80 筹码', price: 5, type: 'chips', val: 80 },
+            { id: 3, name: '全息卡', desc: 'X1.5 倍率', price: 9, type: 'xMult', val: 1.5 },
+            { id: 4, name: '黄金小丑', desc: '出牌结算后获得 $3', price: 8, type: 'gold', val: 3 },
+            { id: 5, name: '超级蓝图', desc: 'X2.0 倍率', price: 14, type: 'xMult', val: 2 },
+            { id: 6, name: '冰淇淋', desc: '+200 筹码', price: 10, type: 'chips', val: 200 }
         ];
 
         const HAND_STATS = {
@@ -219,11 +224,11 @@
             '葫芦': { chips: 40, mult: 4, lvl: 1 }, '四条': { chips: 60, mult: 7, lvl: 1 }, '同花顺': { chips: 100, mult: 8, lvl: 1 }
         };
 
-        // --- 游戏状态 ---
+        // --- 核心状态 ---
         let state = {
             ante: 1, gold: 4, jokers: [], handLvl: JSON.parse(JSON.stringify(HAND_STATS)),
-            scalingMult: 1.0, finished: [], score: 0, target: 0, hands: 4, discards: 3,
-            deck: [], hand: [], selIds: [], isAnim: false, nextId: 1, boss: null
+            finished: [], score: 0, target: 0, hands: 4, discards: 3,
+            deck: [], hand: [], selIds: [], isAnim: false, isScoring: false, nextId: 1
         };
 
         const core = {
@@ -233,43 +238,30 @@
                 if (id === 'blind') this.prepareBlinds();
             },
             save() {
-                const d = { ante: state.ante, gold: state.gold, jIds: state.jokers.map(j => j.id), handLvl: state.handLvl, sm: state.scalingMult, finished: state.finished };
-                localStorage.setItem('balatro_hardcore_save', JSON.stringify(d));
+                const d = { ante: state.ante, gold: state.gold, jIds: state.jokers.map(j => j.id), handLvl: state.handLvl, finished: state.finished };
+                localStorage.setItem('balatro_apex_scoring_v1', JSON.stringify(d));
+                const t = document.getElementById('save-tag'); t.classList.add('active'); setTimeout(() => t.classList.remove('active'), 1000);
             },
             load() {
-                const s = localStorage.getItem('balatro_hardcore_save');
+                const s = localStorage.getItem('balatro_apex_scoring_v1');
                 if (s) {
                     const d = JSON.parse(s);
-                    state.ante = d.ante; state.gold = d.gold; state.handLvl = d.handLvl; state.scalingMult = d.sm || 1.0; state.finished = d.finished;
-                    state.jokers = d.jIds.map(id => JOKERS.find(j => j.id === id)).filter(Boolean);
+                    state.ante = d.ante; state.gold = d.gold; state.handLvl = d.handLvl; state.finished = d.finished;
+                    state.jokers = d.jIds.map(id => JOKER_POOL.find(j => j.id === id)).filter(Boolean);
                     return true;
                 } return false;
             },
-            newRun() { 
-                state.ante = 1; state.gold = 4; state.jokers = []; state.scalingMult = 1.0; state.finished = []; 
-                state.handLvl = JSON.parse(JSON.stringify(HAND_STATS)); 
-                this.save(); this.showScreen('blind'); 
-            },
+            newRun() { state.ante = 1; state.gold = 4; state.jokers = []; state.finished = []; state.handLvl = JSON.parse(JSON.stringify(HAND_STATS)); this.save(); this.showScreen('blind'); },
             continueRun() { if (this.load()) this.showScreen('blind'); },
 
             prepareBlinds() {
                 document.getElementById('ante-ui').innerText = state.ante;
-                // 狂暴级增长: 300 * (2.5 ^ (Ante-1))
-                const scale = Math.pow(2.5, state.ante - 1);
-                const baseTarget = 300 * scale;
-                
+                let baseTarget = (state.ante === 1) ? 300 : (state.ante === 2 ? 1200 : 600 * Math.pow(2.8, state.ante - 1));
                 document.getElementById('t-small').innerText = Math.floor(baseTarget).toLocaleString();
                 document.getElementById('t-big').innerText = Math.floor(baseTarget * 1.5).toLocaleString();
-                
-                if (!state.boss) state.boss = BOSS_POOL[Math.floor(Math.random() * BOSS_POOL.length)];
-                let bossTarget = baseTarget * 3;
-                if (state.boss.id === 'the_wall') bossTarget *= state.boss.mult;
-                document.getElementById('t-boss').innerText = Math.floor(bossTarget).toLocaleString();
-                
-                document.getElementById('boss-name-ui').innerText = state.boss.name;
-                document.getElementById('boss-desc-ui').innerText = state.boss.desc;
+                document.getElementById('t-boss').innerText = Math.floor(baseTarget * 2.0).toLocaleString();
 
-                if (state.finished.length >= 3) { state.ante++; state.finished = []; state.boss = null; this.save(); this.prepareBlinds(); return; }
+                if (state.finished.length >= 3) { state.ante++; state.finished = []; this.save(); this.prepareBlinds(); return; }
                 ['small', 'big', 'boss'].forEach(t => {
                     const el = document.getElementById(`b-${t}`);
                     el.style.opacity = state.finished.includes(t) ? "0.2" : "1";
@@ -278,26 +270,17 @@
             },
 
             async startCombat(type) {
-                const scale = Math.pow(2.5, state.ante - 1);
-                const baseTarget = 300 * scale;
-                state.target = type === 'small' ? baseTarget : (type === 'big' ? baseTarget * 1.5 : baseTarget * 3);
-                if (type === 'boss' && state.boss.id === 'the_wall') state.target *= state.boss.mult;
-                
+                let baseTarget = (state.ante === 1) ? 300 : (state.ante === 2 ? 1200 : 600 * Math.pow(2.8, state.ante - 1));
+                state.target = type === 'small' ? baseTarget : (type === 'big' ? baseTarget * 1.5 : baseTarget * 2.0);
                 state.currentType = type;
                 state.score = 0; state.hands = 4; state.discards = 3;
-                if (type === 'boss' && state.boss.hands) state.hands = state.boss.hands;
-                
                 state.selIds = []; state.hand = [];
                 state.deck = []; SUITS.forEach(s => RANKS.forEach(r => state.deck.push({ suit: s, rank: r })));
                 state.deck.sort(() => Math.random() - 0.5);
 
                 this.showScreen('game');
                 document.getElementById('round-info').innerText = `Ante ${state.ante} - ${type.toUpperCase()}`;
-                const bUI = document.getElementById('active-boss-ui');
-                if (type === 'boss') { bUI.innerText = `BOSS: ${state.boss.desc}`; bUI.classList.remove('hidden'); }
-                else bUI.classList.add('hidden');
-
-                document.getElementById('card-area').innerHTML = '';
+                document.getElementById('card-area').innerHTML = ''; 
                 this.updateUI(); await this.draw(8);
             },
 
@@ -313,17 +296,16 @@
                         const el = document.createElement('div');
                         el.id = `c-${cId}`; el.className = `card ${card.suit.c}`;
                         el.innerHTML = `<div style="pointer-events:none">${card.rank}</div><div class="text-4xl self-center" style="pointer-events:none">${card.suit.s}</div><div class="rotate-180 self-end" style="pointer-events:none">${card.rank}</div>`;
-                        el.style.transform = `translate(500px, 400px) scale(0)`;
+                        el.style.transform = `translate(400px, 400px) rotate(90deg) scale(0)`;
                         area.appendChild(el);
-                        await new Promise(r => requestAnimationFrame(() => {
-                            requestAnimationFrame(() => { el.style.opacity = '1'; this.layout(); r(); });
-                        }));
+                        await new Promise(r => requestAnimationFrame(() => { requestAnimationFrame(() => { el.style.opacity = '1'; this.layout(); r(); }); }));
                         await new Promise(r => setTimeout(r, 80));
                     }
                 } finally { state.isAnim = false; this.layout(); }
             },
 
             layout() {
+                if (state.isScoring) return; // 计分期间禁止更新布局
                 const total = state.hand.length;
                 const space = Math.min(90, 680 / total);
                 const startX = -((total - 1) * space) / 2;
@@ -332,13 +314,8 @@
                     const sel = state.selIds.includes(card.id);
                     const x = startX + i * space;
                     const rot = (i - (total - 1) / 2) * 3;
-                    
-                    // Boss Debuff 视觉
-                    const isDebuffed = state.currentType === 'boss' && state.boss.debuff === 'no_face' && ['J','Q','K'].includes(card.rank);
-                    if (isDebuffed) el.classList.add('debuffed'); else el.classList.remove('debuffed');
-
-                    el.style.transform = `translateX(${x}px) translateY(${sel ? -95 : 0}px) rotate(${sel ? 0 : rot}deg) scale(${sel ? 1.1 : 1})`;
-                    el.style.zIndex = sel ? 900 + i : 100 + i;
+                    el.style.transform = `translateX(${x}px) translateY(${sel ? -95 : 0}px) rotate(${sel ? 0 : rot}deg) scale(${sel ? 1.12 : 1})`;
+                    el.style.zIndex = sel ? 800 + i : 100 + i;
                     if (sel) el.classList.add('selected-visual'); else el.classList.remove('selected-visual');
                     el.onclick = (e) => { e.stopPropagation(); this.select(card.id); };
                 });
@@ -346,7 +323,7 @@
             },
 
             select(id) {
-                if (state.isAnim) return;
+                if (state.isAnim || state.isScoring) return;
                 if (state.selIds.includes(id)) state.selIds = state.selIds.filter(i => i !== id);
                 else if (state.selIds.length < 5) state.selIds.push(id);
                 this.layout();
@@ -355,30 +332,18 @@
             analyze() {
                 const sel = state.hand.filter(c => state.selIds.includes(c.id));
                 const res = this.getHandRank(sel);
-                let c = 0, m = 0;
                 if (sel.length) {
                     const base = state.handLvl[res.name];
-                    c = base.chips; m = base.mult;
-                    if (state.currentType === 'boss' && state.boss.debuff === 'half_base') { c /= 2; m /= 2; }
-                    
-                    sel.forEach(card => {
-                        const isDebuffed = state.currentType === 'boss' && state.boss.debuff === 'no_face' && ['J','Q','K'].includes(card.rank);
-                        if (!isDebuffed) c += RANK_VALS[card.rank];
-                    });
-                    
-                    state.jokers.forEach(j => {
-                        if (j.type === 'chips') c += j.val;
-                        if (j.type === 'mult') m += j.val;
-                    });
-                    state.jokers.forEach(j => { if (j.type === 'xMult') m *= j.val; });
-                    m *= state.scalingMult; // 星座小丑加成
-                    document.getElementById('ui-hand-lvl').innerText = `Level ${base.lvl}`;
+                    document.getElementById('ui-hand-lvl').innerText = `LEVEL ${base.lvl}`;
+                    document.getElementById('ui-hand-name').innerText = res.name;
+                    document.getElementById('calc-chips').innerText = base.chips;
+                    document.getElementById('calc-mult').innerText = base.mult;
                 } else {
                     document.getElementById('ui-hand-lvl').innerText = "";
+                    document.getElementById('ui-hand-name').innerText = "";
+                    document.getElementById('calc-chips').innerText = "0";
+                    document.getElementById('calc-mult').innerText = "0";
                 }
-                document.getElementById('ui-hand-name').innerText = sel.length ? res.name : "";
-                document.getElementById('calc-chips').innerText = Math.floor(c).toLocaleString();
-                document.getElementById('calc-mult').innerText = m.toFixed(1);
             },
 
             getHandRank(cards) {
@@ -387,57 +352,95 @@
                 const ss = new Set(cards.map(c => c.suit.id));
                 const counts = {}; rv.forEach(v => counts[v] = (counts[v]||0)+1);
                 const cv = Object.values(counts).sort((a,b)=>b-a);
-                let f = ss.size === 1 && cards.length === 5;
-                let s = cards.length === 5 && rv.every((v, i) => i === 0 || v === rv[i-1] + 1);
-                if (!s && cards.length === 5 && JSON.stringify(rv) === '[2,3,4,5,14]') s = true;
+                let isF = ss.size === 1 && cards.length === 5;
+                let isS = cards.length === 5 && rv.every((v, i) => i === 0 || v === rv[i-1] + 1);
+                if (!isS && cards.length === 5 && JSON.stringify(rv) === '[2,3,4,5,14]') isS = true;
 
-                if (f && s) return { name: '同花顺' }; if (cv[0] === 4) return { name: '四条' };
-                if (cv[0] === 3 && cv[1] === 2) return { name: '葫芦' }; if (f) return { name: '同花' };
-                if (s) return { name: '顺子' }; if (cv[0] === 3) return { name: '三条' };
+                if (isF && isS) return { name: '同花顺' }; if (cv[0] === 4) return { name: '四条' };
+                if (cv[0] === 3 && cv[1] === 2) return { name: '葫芦' }; if (isF) return { name: '同花' };
+                if (isS) return { name: '顺子' }; if (cv[0] === 3) return { name: '三条' };
                 if (cv[0] === 2 && cv[1] === 2) return { name: '两对' }; if (cv[0] === 2) return { name: '对子' };
                 return { name: '高牌' };
             },
 
             async play() {
-                if (!state.selIds.length || state.hands <= 0 || state.isAnim) return;
+                if (!state.selIds.length || state.hands <= 0 || state.isAnim || state.isScoring) return;
+                state.isScoring = true;
+                
                 const sel = state.hand.filter(c => state.selIds.includes(c.id));
                 const res = this.getHandRank(sel);
                 const base = state.handLvl[res.name];
-                let c = base.chips, m = base.mult;
-                if (state.currentType === 'boss' && state.boss.debuff === 'half_base') { c /= 2; m /= 2; }
+                let curChips = base.chips;
+                let curMult = base.mult;
+
+                const cp = document.getElementById('calc-panel');
+                const chipsUI = document.getElementById('calc-chips');
+                const multUI = document.getElementById('calc-mult');
+
+                // 1. 基础分闪烁
+                cp.classList.add('bump');
+                await new Promise(r => setTimeout(r, 400));
+                cp.classList.remove('bump');
+
+                // 2. 卡牌逐张计分
+                for (let card of sel) {
+                    const el = document.getElementById(`c-${card.id}`);
+                    el.classList.add('scoring-jump');
+                    curChips += RANK_VALS[card.rank];
+                    chipsUI.innerText = curChips;
+                    chipsUI.style.color = "white";
+                    setTimeout(() => chipsUI.style.color = "var(--blue)", 200);
+                    await new Promise(r => setTimeout(r, 300));
+                    el.classList.remove('scoring-jump');
+                }
+
+                // 3. 小丑牌依次触发
+                const jokerEls = document.querySelectorAll('.joker-card');
+                for (let i = 0; i < state.jokers.length; i++) {
+                    const jData = state.jokers[i];
+                    const jEl = jokerEls[i];
+                    jEl.classList.add('trigger');
+                    
+                    if (jData.type === 'chips') curChips += jData.val;
+                    if (jData.type === 'mult') curMult += jData.val;
+                    if (jData.type === 'xMult') curMult *= jData.val;
+                    if (jData.type === 'gold') state.gold += jData.val;
+                    
+                    chipsUI.innerText = Math.floor(curChips);
+                    multUI.innerText = curMult.toFixed(1);
+                    await new Promise(r => setTimeout(r, 500));
+                    jEl.classList.remove('trigger');
+                }
+
+                // 4. 总计飞入
+                const earned = Math.floor(curChips * curMult);
+                cp.classList.add('shake');
+                await new Promise(r => setTimeout(r, 500));
+                cp.classList.remove('shake');
+
+                // 5. 更新主分数 (平滑增加)
+                const startScore = state.score;
+                state.score += earned;
+                state.hands--;
+                this.animateValue('ui-score', startScore, state.score, 600);
                 
-                sel.forEach(card => {
-                    if (!(state.currentType === 'boss' && state.boss.debuff === 'no_face' && ['J','Q','K'].includes(card.rank)))
-                        c += RANK_VALS[card.rank];
-                });
-
-                state.jokers.forEach(j => {
-                    if (j.type === 'chips') c += j.val;
-                    if (j.type === 'mult') m += j.val;
-                    if (j.type === 'gold') state.gold += j.val;
-                });
-                state.jokers.forEach(j => { if (j.type === 'xMult') m *= j.val; });
-                m *= state.scalingMult;
-
-                state.score += Math.floor(c * m); state.hands--;
-                document.getElementById('score-panel').classList.add('shake');
-                setTimeout(() => document.getElementById('score-panel').classList.remove('shake'), 400);
-
+                // 6. 移除出过的牌
                 state.selIds.forEach(id => {
                     const el = document.getElementById(`c-${id}`);
-                    if(el) { el.style.transform = `translateY(-600px) scale(0) rotate(30deg)`; el.style.opacity = '0'; setTimeout(()=>el.remove(), 600); }
+                    if(el) { el.style.transform = `translateY(-600px) rotate(30deg)`; el.style.opacity = '0'; setTimeout(()=>el.remove(), 600); }
                 });
-                state.hand = state.hand.filter(c => !state.selIds.includes(c.id)); state.selIds = [];
+                state.hand = state.hand.filter(c => !state.selIds.includes(c.id));
+                state.selIds = [];
+                state.isScoring = false;
+                
                 this.updateUI();
-
                 if (state.score >= state.target) setTimeout(() => this.win(), 800);
-                else if (state.hands <= 0) setTimeout(() => { alert("游戏结束：分数未达标"); this.showScreen('home'); }, 800);
+                else if (state.hands <= 0) setTimeout(() => { alert("失败了！分数未达标。"); this.showScreen('home'); }, 800);
                 else await this.draw(8);
             },
 
             async discard() {
-                if (state.currentType === 'boss' && state.boss.no_discard) return;
-                if (!state.selIds.length || state.discards <= 0 || state.isAnim) return;
+                if (!state.selIds.length || state.discards <= 0 || state.isAnim || state.isScoring) return;
                 state.discards--;
                 state.selIds.forEach(id => {
                     const el = document.getElementById(`c-${id}`);
@@ -445,6 +448,19 @@
                 });
                 state.hand = state.hand.filter(c => !state.selIds.includes(c.id)); state.selIds = [];
                 this.updateUI(); await this.draw(8);
+            },
+
+            animateValue(id, start, end, duration) {
+                const obj = document.getElementById(id);
+                const range = end - start;
+                let startTime = null;
+                const step = (currentTime) => {
+                    if (!startTime) startTime = currentTime;
+                    const progress = Math.min((currentTime - startTime) / duration, 1);
+                    obj.innerText = Math.floor(progress * range + start).toLocaleString();
+                    if (progress < 1) requestAnimationFrame(step);
+                };
+                requestAnimationFrame(step);
             },
 
             win() {
@@ -457,20 +473,20 @@
                 this.showScreen('shop');
                 document.getElementById('shop-gold').innerText = `$${state.gold}`;
                 const container = document.getElementById('shop-container'); container.innerHTML = '';
-                const pJ = [...JOKERS].sort(() => Math.random() - 0.5).slice(0, 2);
+                const pJ = [...JOKER_POOL].sort(() => Math.random() - 0.5).slice(0, 2);
                 pJ.forEach(j => {
                     const div = document.createElement('div'); div.className = 'panel flex flex-col items-center gap-6 w-52';
-                    div.innerHTML = `<div class="joker-card"><b>${j.name}</b><br><br>${j.desc}</div><div class="text-yellow-500 text-xs">$${j.price}</div><button class="btn btn-gold w-full" ${state.gold < j.price || state.jokers.length >= 5 ? 'disabled' : ''} onclick="core.buyJoker(${j.id})">购买</button>`;
+                    div.innerHTML = `<div class="joker-card"><b>${j.name}</b><br><br>${j.desc}</div><div class="text-yellow-500 text-xs">$${j.price}</div><button class="btn btn-gold w-full" ${state.gold < j.price || state.jokers.length >= 5 ? 'disabled' : ''} onclick="core.buyJoker(${j.id})">BUY</button>`;
                     container.appendChild(div);
                 });
                 const hNames = Object.keys(HAND_STATS); const rand = hNames[Math.floor(Math.random()*hNames.length)];
                 const pl = document.createElement('div'); pl.className = 'panel flex flex-col items-center gap-6 w-52 bg-gradient-to-br from-blue-900 to-purple-900';
-                pl.innerHTML = `<div class="text-[10px] text-center">星球: ${rand}</div><div class="text-[8px] text-purple-300">等级+1</div><div class="text-yellow-500 text-xs">$3</div><button class="btn btn-gold w-full" ${state.gold < 3 ? 'disabled' : ''} onclick="core.buyPlanet('${rand}')">购买</button>`;
+                pl.innerHTML = `<div class="text-[10px] text-center">PLANET: ${rand}</div><div class="text-[8px] text-purple-300">LVL +1</div><div class="text-yellow-500 text-xs">$3</div><button class="btn btn-gold w-full" ${state.gold < 3 ? 'disabled' : ''} onclick="core.buyPlanet('${rand}')">BUY</button>`;
                 container.appendChild(pl);
             },
 
             buyJoker(id) {
-                const j = JOKERS.find(x => x.id === id);
+                const j = JOKER_POOL.find(x => x.id === id);
                 if (state.gold >= j.price) { state.gold -= j.price; state.jokers.push(j); this.save(); this.shop(); }
             },
 
@@ -478,8 +494,6 @@
                 if (state.gold >= 3) {
                     state.gold -= 3; state.handLvl[name].lvl++;
                     state.handLvl[name].chips += 15; state.handLvl[name].mult += 3;
-                    const scalingJoker = state.jokers.find(j => j.type === 'scaling');
-                    if (scalingJoker) state.scalingMult += scalingJoker.val;
                     this.save(); this.shop();
                 }
             },
