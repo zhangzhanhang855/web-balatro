@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Balatro Apex: True Random Edition</title>
+    <title>Balatro Apex: Logic Fixed Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -20,7 +19,7 @@
             touch-action: manipulation;
         }
 
-        /* 迷幻背景 */
+        /* 幻觉背景 */
         .vortex {
             position: fixed; inset: -100%; z-index: -2;
             background: radial-gradient(circle at center, #1a0a3a 0%, #05050a 80%);
@@ -34,7 +33,6 @@
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.15); } }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* CRT 扫描线 */
         .crt::after {
             content: " "; display: block; position: absolute; inset: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%),
@@ -45,7 +43,7 @@
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         .screen.active { display: flex; }
 
-        /* 卡牌布局 */
+        /* 卡牌样式 */
         .card {
             width: var(--card-w); height: var(--card-h); background: white; border-radius: 10px; color: black;
             position: absolute; cursor: pointer; 
@@ -54,13 +52,15 @@
             box-shadow: 4px 4px 0 rgba(0,0,0,0.6); user-select: none; will-change: transform;
             left: 50%; bottom: 50%;
         }
+        
         .card.selected-visual {
             border: 4px solid var(--gold) !important;
             box-shadow: 0 0 30px var(--gold), 5px 5px 0 rgba(0,0,0,0.5) !important;
             z-index: 800 !important;
         }
+        
         .card.in-deck { transform: translate(500px, 400px) rotate(180deg) scale(0) !important; opacity: 0; pointer-events: none; transition: none !important; }
-        .card.scoring-jump { transform: translateY(-140px) scale(1.25) !important; border-color: white !important; z-index: 950 !important; }
+        .card.scoring-jump { transform: translateY(-135px) scale(1.2) !important; border-color: white !important; z-index: 950 !important; box-shadow: 0 10px 40px rgba(255,255,255,0.4) !important; }
 
         .c-red { color: var(--red); } .c-black { color: #1a1a1a; }
 
@@ -75,7 +75,6 @@
         .btn-red { background: var(--red); color: white; } 
         .btn-gold { background: var(--gold); color: black; }
 
-        /* 小丑牌 */
         .joker-row { display: flex; gap: 14px; position: absolute; top: 40px; left: 50%; transform: translateX(-50%); z-index: 20; }
         .joker-slot { width: 80px; height: 110px; border: 3px dashed #445; border-radius: 10px; }
         .joker-card {
@@ -88,12 +87,10 @@
         .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(3px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
 
-        /* 计分数值动画 */
         .calc-box { transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .calc-box.bump { transform: scale(1.4); filter: brightness(1.5); }
-        .calc-box.multiply { transform: scale(1.6); color: white; text-shadow: 0 0 20px var(--red); }
+        .calc-box.bump { transform: scale(1.2); filter: brightness(1.3); }
 
-        #deck-view { position: absolute; bottom: 30px; right: 40px; text-align: center; opacity: 0.8; }
+        #deck-view { position: absolute; bottom: 30px; right: 40px; text-align: center; opacity: 0.7; }
         #save-tag { position: fixed; bottom: 20px; right: 20px; font-size: 10px; color: #444; transition: 0.3s; z-index: 100; }
         #save-tag.active { color: var(--gold); }
     </style>
@@ -105,16 +102,16 @@
     <!-- 1. 主界面 -->
     <div id="screen-home" class="screen active">
         <h1 class="text-7xl text-red-500 mb-8" style="text-shadow: 6px 6px 0 #fff;">BALATRO</h1>
-        <p class="text-[16px] text-blue-400 mb-24 tracking-[0.6em] animate-pulse">TRUE RANDOMNESS</p>
+        <p class="text-[16px] text-blue-400 mb-24 tracking-[0.6em] animate-pulse">LOGIC FIXED</p>
         <div class="flex flex-col gap-8 w-96">
-            <button onclick="core.newRun()" class="btn btn-blue text-2xl">新挑战 (New Run)</button>
+            <button onclick="core.newRun()" class="btn btn-blue text-2xl">新挑战</button>
             <button id="btn-continue" onclick="core.continueRun()" class="btn btn-gold text-2xl hidden">继续游戏</button>
         </div>
     </div>
 
     <!-- 2. 盲注选择 -->
     <div id="screen-blind" class="screen">
-        <h2 class="text-5xl text-yellow-500 mb-12 italic font-bold tracking-tighter">ANTE <span id="ante-ui">1</span></h2>
+        <h2 class="text-5xl text-yellow-500 mb-12 italic font-bold tracking-tighter text-center">ANTE <span id="ante-ui">1</span></h2>
         <div class="flex gap-8">
             <div id="b-small" class="panel w-80 text-center cursor-pointer hover:scale-105 transition" onclick="core.startCombat('small')">
                 <div class="text-blue-300 text-2xl mb-8 italic">小盲注</div>
@@ -177,7 +174,6 @@
                     </div>
                 </div>
 
-                <!-- 手牌容器 -->
                 <div id="card-area" class="relative w-full h-56 flex justify-center items-end" style="min-width: 600px;"></div>
 
                 <div class="flex gap-12">
@@ -187,9 +183,8 @@
             </div>
         </div>
 
-        <!-- 牌堆视图 -->
         <div id="deck-view">
-            <div class="text-[8px] text-gray-500 mb-2 uppercase">Remaining Cards</div>
+            <div class="text-[8px] text-gray-500 mb-2 uppercase">Deck</div>
             <div id="deck-count" class="text-xl text-gray-300">52</div>
         </div>
     </div>
@@ -207,13 +202,12 @@
     <div id="save-tag">SAVE SYNCED</div>
 
     <script>
-        // --- 核心算法：Fisher-Yates 洗牌 ---
+        // --- 费雪-耶茨洗牌 ---
         function shuffle(array) {
-            let currentIndex = array.length, randomIndex;
-            while (currentIndex != 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            let cur = array.length;
+            while (cur != 0) {
+                let rand = Math.floor(Math.random() * cur); cur--;
+                [array[cur], array[rand]] = [array[rand], array[cur]];
             }
             return array;
         }
@@ -242,7 +236,6 @@
             '葫芦': { chips: 40, mult: 4, lvl: 1 }, '四条': { chips: 60, mult: 7, lvl: 1 }, '同花顺': { chips: 100, mult: 8, lvl: 1 }
         };
 
-        // --- 游戏状态 ---
         let state = {
             ante: 1, gold: 4, jokers: [], handLvl: JSON.parse(JSON.stringify(HAND_STATS)),
             finished: [], score: 0, target: 0, hands: 4, discards: 3,
@@ -257,11 +250,11 @@
             },
             save() {
                 const d = { ante: state.ante, gold: state.gold, jIds: state.jokers.map(j => j.id), handLvl: state.handLvl, finished: state.finished };
-                localStorage.setItem('balatro_true_random_save', JSON.stringify(d));
+                localStorage.setItem('balatro_logic_fixed_save', JSON.stringify(d));
                 const t = document.getElementById('save-tag'); t.classList.add('active'); setTimeout(() => t.classList.remove('active'), 1000);
             },
             load() {
-                const s = localStorage.getItem('balatro_true_random_save');
+                const s = localStorage.getItem('balatro_logic_fixed_save');
                 if (s) {
                     const d = JSON.parse(s);
                     state.ante = d.ante; state.gold = d.gold; state.handLvl = d.handLvl; state.finished = d.finished;
@@ -274,10 +267,10 @@
 
             prepareBlinds() {
                 document.getElementById('ante-ui').innerText = state.ante;
-                let baseTarget = (state.ante === 1) ? 300 : (state.ante === 2 ? 1200 : 800 * Math.pow(2.8, state.ante - 1));
+                let baseTarget = (state.ante === 1) ? 300 : (state.ante === 2 ? 1200 : 800 * Math.pow(3.0, state.ante - 1));
                 document.getElementById('t-small').innerText = Math.floor(baseTarget).toLocaleString();
                 document.getElementById('t-big').innerText = Math.floor(baseTarget * 1.5).toLocaleString();
-                document.getElementById('t-boss').innerText = Math.floor(baseTarget * 2.5).toLocaleString();
+                document.getElementById('t-boss').innerText = Math.floor(baseTarget * 2.0).toLocaleString();
 
                 if (state.finished.length >= 3) { state.ante++; state.finished = []; this.save(); this.prepareBlinds(); return; }
                 ['small', 'big', 'boss'].forEach(t => {
@@ -288,17 +281,12 @@
             },
 
             async startCombat(type) {
-                let baseTarget = (state.ante === 1) ? 300 : (state.ante === 2 ? 1200 : 800 * Math.pow(2.8, state.ante - 1));
-                state.target = type === 'small' ? baseTarget : (type === 'big' ? baseTarget * 1.5 : baseTarget * 2.5);
-                state.currentType = type;
-                state.score = 0; state.hands = 4; state.discards = 3;
+                let baseTarget = (state.ante === 1) ? 300 : (state.ante === 2 ? 1200 : 800 * Math.pow(3.0, state.ante - 1));
+                state.target = type === 'small' ? baseTarget : (type === 'big' ? baseTarget * 1.5 : baseTarget * 2.0);
+                state.currentType = type; state.score = 0; state.hands = 4; state.discards = 3;
                 state.selIds = []; state.hand = [];
-                
-                // 真·洗牌逻辑
-                state.deck = [];
-                SUITS.forEach(s => RANKS.forEach(r => state.deck.push({ suit: s, rank: r })));
-                shuffle(state.deck); // 使用 Fisher-Yates 算法
-
+                state.deck = []; SUITS.forEach(s => RANKS.forEach(r => state.deck.push({ suit: s, rank: r })));
+                shuffle(state.deck);
                 this.showScreen('game');
                 document.getElementById('round-info').innerText = `Ante ${state.ante} - ${type.toUpperCase()}`;
                 document.getElementById('card-area').innerHTML = ''; 
@@ -322,11 +310,7 @@
                         await new Promise(r => requestAnimationFrame(() => { requestAnimationFrame(() => { el.style.opacity = '1'; this.layout(); r(); }); }));
                         await new Promise(r => setTimeout(r, 80));
                     }
-                } finally { 
-                    state.isAnim = false; 
-                    this.layout(); 
-                    document.getElementById('deck-count').innerText = state.deck.length;
-                }
+                } finally { state.isAnim = false; this.layout(); document.getElementById('deck-count').innerText = state.deck.length; }
             },
 
             layout() {
@@ -339,7 +323,6 @@
                     const sel = state.selIds.includes(card.id);
                     const x = startX + i * space;
                     const rot = (i - (total - 1) / 2) * 3;
-                    
                     el.style.transform = `translateX(${x}px) translateY(${sel ? -95 : 0}px) rotate(${sel ? 0 : rot}deg) scale(${sel ? 1.12 : 1})`;
                     el.style.zIndex = sel ? 850 + i : 100 + i;
                     if (sel) el.classList.add('selected-visual'); else el.classList.remove('selected-visual');
@@ -360,7 +343,7 @@
                 const res = this.getHandRank(sel);
                 if (sel.length) {
                     const base = state.handLvl[res.name];
-                    document.getElementById('ui-hand-lvl').innerText = `LEVEL ${base.lvl}`;
+                    document.getElementById('ui-hand-lvl').innerText = `等级 ${base.lvl}`;
                     document.getElementById('ui-hand-name').innerText = res.name;
                     document.getElementById('calc-chips').innerText = base.chips;
                     document.getElementById('calc-mult').innerText = base.mult;
@@ -372,21 +355,36 @@
                 }
             },
 
+            // --- 关键修复：识别牌型及对应的计分牌 ---
             getHandRank(cards) {
-                if (!cards.length) return { name: '' };
-                const rv = cards.map(c => STRAIGHT_VALS[c.rank]).sort((a,b)=>a-b);
-                const ss = new Set(cards.map(c => c.suit.id));
-                const counts = {}; rv.forEach(v => counts[v] = (counts[v]||0)+1);
-                const cv = Object.values(counts).sort((a,b)=>b-a);
-                let isF = ss.size === 1 && cards.length === 5;
-                let isS = cards.length === 5 && rv.every((v, i) => i === 0 || v === rv[i-1] + 1);
-                if (!isS && cards.length === 5 && JSON.stringify(rv) === '[2,3,4,5,14]') isS = true;
+                if (!cards.length) return { name: '', scoringCards: [] };
+                
+                // 按顺子值排序
+                const sorted = [...cards].sort((a,b) => STRAIGHT_VALS[a.rank] - STRAIGHT_VALS[b.rank]);
+                const counts = {}; cards.forEach(c => counts[c.rank] = (counts[c.rank] || 0) + 1);
+                const suitCounts = {}; cards.forEach(c => suitCounts[c.suit.id] = (suitCounts[c.suit.id] || 0) + 1);
+                
+                const isFlush = Object.values(suitCounts).some(v => v === 5);
+                let isStraight = cards.length === 5 && sorted.every((c, i) => i === 0 || STRAIGHT_VALS[c.rank] === STRAIGHT_VALS[sorted[i-1].rank] + 1);
+                if (!isStraight && cards.length === 5 && JSON.stringify(sorted.map(c => c.rank)) === '["2","3","4","5","A"]') isStraight = true;
 
-                if (isF && isS) return { name: '同花顺' }; if (cv[0] === 4) return { name: '四条' };
-                if (cv[0] === 3 && cv[1] === 2) return { name: '葫芦' }; if (isF) return { name: '同花' };
-                if (isS) return { name: '顺子' }; if (cv[0] === 3) return { name: '三条' };
-                if (cv[0] === 2 && cv[1] === 2) return { name: '两对' }; if (cv[0] === 2) return { name: '对子' };
-                return { name: '高牌' };
+                if (isFlush && isStraight) return { name: '同花顺', scoringCards: cards };
+                
+                const rankFreq = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+                if (rankFreq[0][1] === 4) return { name: '四条', scoringCards: cards.filter(c => c.rank === rankFreq[0][0]) };
+                if (rankFreq[0][1] === 3 && rankFreq[1] && rankFreq[1][1] === 2) return { name: '葫芦', scoringCards: cards };
+                if (isFlush) return { name: '同花', scoringCards: cards };
+                if (isStraight) return { name: '顺子', scoringCards: cards };
+                if (rankFreq[0][1] === 3) return { name: '三条', scoringCards: cards.filter(c => c.rank === rankFreq[0][0]) };
+                if (rankFreq[0][1] === 2 && rankFreq[1] && rankFreq[1][1] === 2) {
+                    const r1 = rankFreq[0][0], r2 = rankFreq[1][0];
+                    return { name: '两对', scoringCards: cards.filter(c => c.rank === r1 || c.rank === r2) };
+                }
+                if (rankFreq[0][1] === 2) return { name: '对子', scoringCards: cards.filter(c => c.rank === rankFreq[0][0]) };
+
+                // 高牌逻辑修复：只取点数最大的一张
+                const highestCard = [...cards].sort((a,b) => RANK_VALS[b.rank] - RANK_VALS[a.rank])[0];
+                return { name: '高牌', scoringCards: [highestCard] };
             },
 
             async play() {
@@ -394,8 +392,8 @@
                 state.isScoring = true;
                 
                 const sel = state.hand.filter(c => state.selIds.includes(c.id));
-                const res = this.getHandRank(sel);
-                const base = state.handLvl[res.name];
+                const { name, scoringCards } = this.getHandRank(sel);
+                const base = state.handLvl[name];
                 let curChips = base.chips;
                 let curMult = base.mult;
 
@@ -403,58 +401,47 @@
                 const chipsUI = document.getElementById('calc-chips');
                 const multUI = document.getElementById('calc-mult');
 
-                // 1. 牌组基础分脉冲
                 cp.classList.add('bump');
                 await new Promise(r => setTimeout(r, 400));
                 cp.classList.remove('bump');
 
-                // 2. 卡牌逐张计分
-                for (let card of sel) {
+                // 逐张跳动计分 (仅限 scoringCards)
+                for (let card of scoringCards) {
                     const el = document.getElementById(`c-${card.id}`);
-                    el.classList.add('scoring-jump');
+                    if(el) el.classList.add('scoring-jump');
                     curChips += RANK_VALS[card.rank];
                     chipsUI.innerText = curChips;
                     chipsUI.style.color = "white";
                     setTimeout(() => chipsUI.style.color = "var(--blue)", 150);
-                    await new Promise(r => setTimeout(r, 250));
-                    el.classList.remove('scoring-jump');
+                    await new Promise(r => setTimeout(r, 300));
+                    if(el) el.classList.remove('scoring-jump');
                 }
 
-                // 3. 小丑牌触发
+                // 小丑牌触发
                 const jokerEls = document.querySelectorAll('.joker-card');
                 for (let i = 0; i < state.jokers.length; i++) {
                     const jData = state.jokers[i];
                     const jEl = jokerEls[i];
                     jEl.classList.add('trigger');
-                    
                     if (jData.type === 'chips') curChips += jData.val;
                     if (jData.type === 'mult') curMult += jData.val;
-                    if (jData.type === 'xMult') {
-                        curMult *= jData.val;
-                        multUI.classList.add('multiply');
-                        setTimeout(() => multUI.classList.remove('multiply'), 300);
-                    }
+                    if (jData.type === 'xMult') curMult *= jData.val;
                     if (jData.type === 'gold') state.gold += jData.val;
-                    
                     chipsUI.innerText = Math.floor(curChips).toLocaleString();
                     multUI.innerText = curMult.toFixed(1);
                     await new Promise(r => setTimeout(r, 450));
                     jEl.classList.remove('trigger');
                 }
 
-                // 4. 计算结果
                 const earned = Math.floor(curChips * curMult);
                 cp.classList.add('shake');
                 await new Promise(r => setTimeout(r, 500));
                 cp.classList.remove('shake');
 
-                // 5. 分数平滑滚动
                 const startScore = state.score;
-                state.score += earned;
-                state.hands--;
+                state.score += earned; state.hands--;
                 this.animateValue('ui-score', startScore, state.score, 800);
                 
-                // 6. 出牌动画结束
                 state.selIds.forEach(id => {
                     const el = document.getElementById(`c-${id}`);
                     if(el) { el.style.transform = `translateY(-650px) rotate(45deg) scale(0)`; el.style.opacity = '0'; setTimeout(()=>el.remove(), 600); }
@@ -487,8 +474,7 @@
                 const step = (currentTime) => {
                     if (!startTime) startTime = currentTime;
                     const progress = Math.min((currentTime - startTime) / duration, 1);
-                    const val = Math.floor(progress * range + start);
-                    obj.innerText = val.toLocaleString();
+                    obj.innerText = Math.floor(progress * range + start).toLocaleString();
                     if (progress < 1) requestAnimationFrame(step);
                 };
                 requestAnimationFrame(step);
@@ -551,4 +537,3 @@
     </script>
 </body>
 </html>
-
